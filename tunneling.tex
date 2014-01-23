@@ -1,0 +1,183 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage{amsfonts,amsmath}
+
+\title{Calculation of tunneling probability}
+\author{Greg von Winckel}
+\date{\today}
+
+\begin{document}
+\maketitle
+In one spatial dimension the time-independent Schr\"odinger equation is
+\begin{equation}
+\left\{-\frac{\hbar^2}{2}\frac{d}{dx}\frac{1}{m(x)}\frac{d}{dx}+V(x)-E\right\}
+\psi(x;E)=0
+\end{equation}
+Across the entire structure $\psi(x)$ and $\psi'(x)/m(x)$ must be continuous. We can write
+this in standard Sturm--Liouville form as
+\begin{equation}
+-[p(x)y'(x)]'+q(x)y(x)=0 
+\label{eqn:slprob}
+\end{equation}
+where 
+\begin{equation}
+y=\psi(x;E),\quad p(x)=\frac{\hbar^2}{2m(x)},\quad q(x)=V(x)-E 
+\end{equation}
+Now suppose we divide up the domain into a sequence of layers. The fact that
+the differential equation second-order means there are, in general, two linearly independent solutions. We can choose the representation of there being a left-propagating wave 
+solution and a right-propagating solution. If $p$ and $q$ would be spatially constant,
+then the left and right solutions would be
+\begin{equation}
+y_L(x) \sim \exp(-ikx),\quad y_R(x) \sim \exp(ikx)
+\end{equation}
+where $k=\sqrt{-q/p}$ and $k$ becomes purely real when $E<V$. Approximating 
+a structure by a sequence of piecewise constant coefficient problems leads to the 
+Transfer Matrix Method. There also exist methods for locally linear and quadratic coefficients which use Airy and hypergeometric functions respectively. In this note,
+we are going to solve the Schr\"odinger equation numerically using as high order method as we like. The question becomes, what are the left and right propagating solutions in general? One possibility is to assume the asymptotic behavior of the variable coefficients. Often they assumed to be constant. If this is the case, then we need only require that the relationship between the one-directional solution and its flux ($p$ times the derivative) be the same as for the asymptotic one-directional solution.
+
+Suppose we have the interval $[0,w]$ and $p$ and $q$ are varying with respect to $x$ 
+throughout this interval. Then the boundary conditions for the left-propating solution are
+\begin{equation}
+y_L(0) = 1,\quad y_L'(0) = -i\sqrt{\frac{q(0)}{p(0)}}
+\end{equation}
+Similarly, the right-propagating solution satsifies the boundary conditions
+\begin{equation}
+y_R(w) = 1,\quad y_R'(w) = i\sqrt{\frac{q(w)}{p(w)}}
+\end{equation}
+The choice of setting the solutions equal to 1 is arbitrary. Any nonzero value will do, provided that the derivative is scaled by the same value. 
+
+We can write the second-order equation as a coupled system of two first-order equations
+by introducting the flux variable $z(x) = p(x) y'(x)$ so that we have
+\begin{equation}
+-z'+q(x)y=0,\quad p(x)y'-z(x) = 0
+\end{equation}
+This representation is nice in the sense that both $y$ and $z$ are globally continuous. 
+The boundary conditions now become
+\begin{equation}
+y_L(0) = 1,\quad z_L(0) = -i\sqrt{q(0)p(0)}
+\label{eqn:leftcond}
+\end{equation}
+and
+\begin{equation}
+y_R(w) = 1,\quad z_R(w) = i\sqrt{q(w)p(w)}
+\label{eqn:rightcond}
+\end{equation}
+In general, the solution within a layer will be a linear combination of
+left and right propagating waves
+\begin{equation}
+y(x) = c_L y_L(x) + c_R y_R(x)
+\end{equation}
+where the coefficients $c_L$ and $c_R$ will be determined by matching the solution
+to neighboring layers. For simplicity, suppose there are two layers which share an 
+interface at $x=w$. Then the matching conditions are that
+\begin{align}
+c_L^1 y_L^1(w) + c_R^1 y_R^1(w) = c_L^2 y_L^2(w) + c_R^2 y_R^2(w) \\
+c_L^1 z_L^1(w) + c_R^1 z_R^1(w) = c_L^2 z_L^2(w) + c_R^2 z_R^2(w) 
+\end{align}
+The right and left transmission probabilities will be
+\begin{align}
+T_R = \left|\frac{c_R^2}{c_R^1}\right|^2 \text{ when } c_L^2=0\\
+T_L = \left|\frac{c_L^1}{c_L^2}\right|^2 \text{ when } c_R^1=0
+\end{align}
+We can also express these as reflection probabilities
+\begin{align}
+R_R = \left|\frac{c_L^1}{c_R^1}\right|^2 \text{ when } c_L^2 = 0 \\
+R_L = \left|\frac{c_R^2}{c_L^2}\right|^2 \text{ when } c_R^1 = 0
+\end{align}
+The idea is now to compute the left and right propagating solution for each layer as 
+if the layers were isolated and then connect the solutions later as needed. To 
+compute the solutions on a single layer, we will use $d$ point collocation 
+Runge-Kutta methods (specifically those using Legendre-Gauss points). Given the Butcher
+tableau
+\begin{equation}
+\begin{array}{c|ccc}
+c_1    & a_{11} & \cdots & a_{1d} \\
+\vdots & \vdots & \ddots & \vdots \\
+c_d    & a_{d1} & \cdots & a_{dd} \\
+\hline
+       & b_1    & \cdots & b_d
+\end{array}
+\end{equation}
+
+
+\subsection*{Left-propagating solution}
+Letting $y_k,z_k$ be the solution at the left end of the layer, given by the values in 
+\eqref{eqn:leftcond}
+\begin{equation}
+\begin{aligned}
+Y_k^i &= y_k + \Delta x_k\sum\limits_{j=1}^d \frac{a_{ij}}{p(x_k+c_j\Delta x_k)}Z_k^j \\
+Z_k^i &= z_k + \Delta x_k\sum\limits_{j=1}^d a_{ij}q(x_k+c_j\Delta x_k)Y_k^j \\
+y_{k+1} &= y_k + \Delta x_k \sum\limits_{i=1}^d \frac{b_{i}}{p(x_k+c_i\Delta x_k)}Z_k^i \\
+z_{k+1} &= z_k + \Delta x_k\sum\limits_{j=1}^d b_{i}q(x_k+c_i\Delta x_k)Y_k^j
+\end{aligned}
+\end{equation}
+The update formulas can be written matrix and vector form as
+\begin{equation}
+\begin{pmatrix}
+\mathbf{I} & -\mathbf{P}_k^A \\
+-\mathbf{Q}_k^A & \mathbf{I}
+\end{pmatrix}
+\begin{pmatrix}
+\mathbf{Y}_k \\
+\mathbf{Z}_k
+\end{pmatrix}
+= \begin{pmatrix}
+y_k \\
+z_k
+\end{pmatrix}\otimes\mathbf{1}_d,\quad 
+y_{k+1} = y_k+\mathbf{P}_k^B\mathbf{Z}_k,\quad
+z_{k+1} = z_k+\mathbf{Q}_k^B\mathbf{Y}_k
+\end{equation}
+Where the matrices and vectors above are
+\begin{equation}
+\mathbf{Y}_k = \begin{pmatrix}
+Y_k^1 \\ \vdots \\ Y_k^d                
+\end{pmatrix},\quad
+\mathbf{Z}_k = \begin{pmatrix}
+Z_k^1 \\ \vdots \\ Z_k^d                
+\end{pmatrix}
+\end{equation}
+
+
+\begin{equation}
+[\mathbf{P}_k^A]_{ij} = \Delta x_k\frac{a_{ij}}{p(x_k+c_j\Delta x_k)} 
+\end{equation}
+
+\begin{equation}
+[\mathbf{Q}_k^A]_{ij} = \Delta x_k a_{ij} q(x_k+c_j\Delta x_k) \\
+\end{equation}
+
+\begin{equation}
+[\mathbf{P}_k^B]_{i}  = \Delta x_k\frac{b_{i}}{p(x_k+c_i\Delta x_k)} \\
+\end{equation}
+
+\begin{equation}
+[\mathbf{Q}_k^B]_{i}  = \Delta x_k b_{i} q(x_k+c_i\Delta x_k) 
+\end{equation}
+
+and $\mathbf{1}_d$ is a column vector of length $d$ where every element is equal to one.
+
+\subsection*{Right-propagating solution}
+The Runge--Kutta method is practically the same as before with some sign flips
+
+\begin{equation}
+\begin{pmatrix}
+\mathbf{I} & \mathbf{P}_k^A \\
+\mathbf{Q}_k^A & \mathbf{I}
+\end{pmatrix}
+\begin{pmatrix}
+\mathbf{Y}_k \\
+\mathbf{Z}_k
+\end{pmatrix}
+= \begin{pmatrix}
+y_{k+1} \\
+z_{k+1}
+\end{pmatrix}\otimes\mathbf{1}_d,\quad 
+y_{k} = y_{k+1}-\mathbf{P}_k^B\mathbf{Z}_k,\quad
+z_{k} = z_{k+1}-\mathbf{Q}_k^B\mathbf{Y}_k
+\end{equation}
+In this case the $y_{k+1},z_{k+1}$ are given by the values in \eqref{eqn:rightcond}
+
+\end{document}
+
